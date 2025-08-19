@@ -49,7 +49,8 @@
 
 #### 高级规则
 
-自定义JS，这里的JS是java的scriptengine执行的，支持ES5的写法。
+自定义JS，这里的JS是java的scriptengine执行的，支持ES5的写法。<br>
+**注意：** 在PostgreSQL中双引号""表示字段名、表名，''表示常量，在下面的示例中，需要把双引号改为单引号 <br>
 
 - 示例一 <br>
   返回yyyyy-MM-dd类型的当前时间
@@ -78,7 +79,7 @@ function verification(data) {
   不传参则查询全部
 
 ```sql
-// sql可以这么写
+// 示例1
 SELECT DATE_FORMAT(create_time, '%Y-%m-%d') create_time, sum(nums) sum_nums
 FROM aj_report_city ${city_name}
 group by create_time;
@@ -96,6 +97,27 @@ function verification(data) {
     return data;
 }
 ```
+
+```sql
+// 示例2
+SELECT DATE_FORMAT(create_time, '%Y-%m-%d') create_time, sum(nums) sum_nums
+FROM aj_report_city where 1=1 ${city_name}
+group by create_time;
+```
+
+```js
+// 不传参则查询全部
+function verification(data) {
+    // 获取示例值
+    data = data.sampleItem;
+    if (data == null || data == '') {
+        return ''
+    }
+    data = 'and city_name = "' + data + '" '
+    return data;
+}
+```
+
 - 示例三 <br>
   in 和 not in
 
