@@ -48,4 +48,44 @@ export function testConnection (data) {
   })
 }
 
-export default { reportDataSourceList, reportDataSourceAdd, reportDataSourceDeleteBatch, reportDataSourceUpdate, reportDataSourceDetail, testConnection}
+export function getSQLiteTables (data) {
+  return request({
+    url: '/dataSource/getSQLiteTables',
+    method: 'post',
+    data,
+  })
+}
+
+export function getSQLiteTableColumns (data, tableName) {
+  return request({
+    url: '/dataSource/getSQLiteTableColumns',
+    method: 'post',
+    data,
+    params: { tableName }
+  })
+}
+
+export function uploadSQLiteFile (file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request({
+    url: '/dataSource/uploadSQLiteFile',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+export default { 
+  reportDataSourceList, 
+  reportDataSourceAdd, 
+  reportDataSourceDeleteBatch, 
+  reportDataSourceUpdate, 
+  reportDataSourceDetail, 
+  testConnection, 
+  getSQLiteTables, 
+  getSQLiteTableColumns, 
+  uploadSQLiteFile 
+}

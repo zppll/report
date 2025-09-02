@@ -1,0 +1,2 @@
+-- Add SQLite support to SOURCE_TYPE dictionary
+INSERT INTO `gaea_dict_item` VALUES (91, 'SOURCE_TYPE', 'sqlite', 'sqlite', '[{"label":"driverName","value":"org.sqlite.JDBC","labelValue":"驱动类"},{"label":"jdbcUrl","value":"jdbc:sqlite:/path/to/database.db","labelValue":"连接串"},{"label":"filePath","value":"/path/to/database.db","labelValue":"数据库文件路径"}]', 1, 'zh', NULL, 31, 'admin', NOW(), 'admin', NOW(), 1);

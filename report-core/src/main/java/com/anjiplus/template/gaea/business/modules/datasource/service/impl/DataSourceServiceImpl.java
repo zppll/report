@@ -104,6 +104,7 @@ public class DataSourceServiceImpl implements DataSourceService {
             case JdbcConstants.DAMENG:
             case JdbcConstants.OPENGAUSS:
             case JdbcConstants.KINGBASE:
+            case JdbcConstants.SQLITE:
                 testRelationalDb(dto);
                 break;
             case JdbcConstants.HTTP:
@@ -132,6 +133,7 @@ public class DataSourceServiceImpl implements DataSourceService {
             case JdbcConstants.DAMENG:
             case JdbcConstants.OPENGAUSS:
             case JdbcConstants.KINGBASE:
+            case JdbcConstants.SQLITE:
                 return executeRelationalDb(dto);
             case JdbcConstants.HTTP:
                 return executeHttp(dto);
@@ -154,6 +156,7 @@ public class DataSourceServiceImpl implements DataSourceService {
             case JdbcConstants.ELASTIC_SEARCH_SQL:
                 return 0;
             case JdbcConstants.MYSQL:
+            case JdbcConstants.SQLITE:
                 return mysqlTotal(sourceDto, dto);
             default:
                 throw BusinessExceptionBuilder.build(ResponseCode.DATA_SOURCE_TYPE_DOES_NOT_MATCH_TEMPORARILY);
@@ -417,6 +420,82 @@ public class DataSourceServiceImpl implements DataSourceService {
         dto.setPassword(password);
     }
 
+
+    /**
+     * 获取SQLite数据库表信息
+     *
+     * @param dto
+     * @return
+     */
+    public List<JSONObject> getSQLiteTables(DataSourceDto dto) {
+        analysisRelationalDbConfig(dto);
+        List<JSONObject> tables = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = jdbcService.getPooledConnection(dto);
+            String sql = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            ResultSet rs = statement.executeQuery();
+            
+            while (rs.next()) {
+                JSONObject table = new JSONObject();
+                table.put("tableName", rs.getString("name"));
+                tables.add(table);
+            }
+        } catch (SQLException e) {
+            log.error("获取SQLite表信息失败", e);
+            throw BusinessExceptionBuilder.build(ResponseCode.EXECUTE_SQL_ERROR, e.getMessage());
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    log.error("关闭连接失败", e);
+                }
+            }
+        }
+        return tables;
+    }
+
+    /**
+     * 获取SQLite表字段信息
+     *
+     * @param dto
+     * @param tableName
+     * @return
+     */
+    public List<JSONObject> getSQLiteTableColumns(DataSourceDto dto, String tableName) {
+        analysisRelationalDbConfig(dto);
+        List<JSONObject> columns = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = jdbcService.getPooledConnection(dto);
+            String sql = "PRAGMA table_info(" + tableName + ")";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            ResultSet rs = statement.executeQuery();
+            
+            while (rs.next()) {
+                JSONObject column = new JSONObject();
+                column.put("columnName", rs.getString("name"));
+                column.put("dataType", rs.getString("type"));
+                column.put("nullable", rs.getInt("notnull") == 0 ? "YES" : "NO");
+                column.put("isPrimaryKey", rs.getInt("pk") > 0 ? "YES" : "NO");
+                columns.add(column);
+            }
+        } catch (SQLException e) {
+            log.error("获取SQLite表字段信息失败", e);
+            throw BusinessExceptionBuilder.build(ResponseCode.EXECUTE_SQL_ERROR, e.getMessage());
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    log.error("关闭连接失败", e);
+                }
+            }
+        }
+        return columns;
+    }
 
     /**
      * es通过api获取数据

@@ -45,4 +45,19 @@ public interface DataSourceService extends GaeaBaseService<DataSourceParam, Data
      * @return
      */
     long total(DataSourceDto dataSourceDto, DataSetDto dto);
+
+    /**
+     * 获取SQLite数据库表信息
+     * @param dto
+     * @return
+     */
+    List<JSONObject> getSQLiteTables(DataSourceDto dto);
+
+    /**
+     * 获取SQLite表字段信息
+     * @param dto
+     * @param tableName
+     * @return
+     */
+    List<JSONObject> getSQLiteTableColumns(DataSourceDto dto, String tableName);
 }
