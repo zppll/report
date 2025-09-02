@@ -104,6 +104,7 @@ public class DataSourceServiceImpl implements DataSourceService {
             case JdbcConstants.DAMENG:
             case JdbcConstants.OPENGAUSS:
             case JdbcConstants.KINGBASE:
+            case JdbcConstants.SQLITE:
                 testRelationalDb(dto);
                 break;
             case JdbcConstants.HTTP:
@@ -132,6 +133,7 @@ public class DataSourceServiceImpl implements DataSourceService {
             case JdbcConstants.DAMENG:
             case JdbcConstants.OPENGAUSS:
             case JdbcConstants.KINGBASE:
+            case JdbcConstants.SQLITE:
                 return executeRelationalDb(dto);
             case JdbcConstants.HTTP:
                 return executeHttp(dto);
@@ -155,6 +157,8 @@ public class DataSourceServiceImpl implements DataSourceService {
                 return 0;
             case JdbcConstants.MYSQL:
                 return mysqlTotal(sourceDto, dto);
+            case JdbcConstants.SQLITE:
+                return sqliteTotal(sourceDto, dto);
             default:
                 throw BusinessExceptionBuilder.build(ResponseCode.DATA_SOURCE_TYPE_DOES_NOT_MATCH_TEMPORARILY);
         }
@@ -177,6 +181,21 @@ public class DataSourceServiceImpl implements DataSourceService {
         int pageNumber = Integer.parseInt(dto.getContextData().getOrDefault("pageNumber", "1").toString());
         int pageSize = Integer.parseInt(dto.getContextData().getOrDefault("pageSize", "10").toString());
         String sqlLimit = " limit " + (pageNumber - 1) * pageSize + "," + pageSize;
+        sourceDto.setDynSentence(dynSentence.concat(sqlLimit));
+        log.info("当前total：{}, 添加分页参数,sql语句：{}", JSONObject.toJSONString(result), sourceDto.getDynSentence());
+        return result.get(0).getLongValue("count");
+    }
+
+    public long sqliteTotal(DataSourceDto sourceDto, DataSetDto dto){
+        String dynSentence = sourceDto.getDynSentence();
+        String sql = "select count(1) as count from (" + dynSentence + ") as gaeaExecute";
+        sourceDto.setDynSentence(sql);
+        List<JSONObject> result = execute(sourceDto);
+
+        int pageNumber = Integer.parseInt(dto.getContextData().getOrDefault("pageNumber", "1").toString());
+        int pageSize = Integer.parseInt(dto.getContextData().getOrDefault("pageSize", "10").toString());
+        int offset = (pageNumber - 1) * pageSize;
+        String sqlLimit = " limit " + pageSize + " offset " + offset;
         sourceDto.setDynSentence(dynSentence.concat(sqlLimit));
         log.info("当前total：{}, 添加分页参数,sql语句：{}", JSONObject.toJSONString(result), sourceDto.getDynSentence());
         return result.get(0).getLongValue("count");
