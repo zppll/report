@@ -96,6 +96,7 @@ public class DataSourceServiceImpl implements DataSourceService {
                 testElasticsearchSqlConnection(dto);
                 break;
             case JdbcConstants.MYSQL:
+            case JdbcConstants.SQLITE:
             case JdbcConstants.KUDU_IMAPLA:
             case JdbcConstants.ORACLE:
             case JdbcConstants.SQL_SERVER:
@@ -124,6 +125,7 @@ public class DataSourceServiceImpl implements DataSourceService {
             case JdbcConstants.ELASTIC_SEARCH_SQL:
                 return executeElasticsearchSql(dto);
             case JdbcConstants.MYSQL:
+            case JdbcConstants.SQLITE:
             case JdbcConstants.KUDU_IMAPLA:
             case JdbcConstants.ORACLE:
             case JdbcConstants.SQL_SERVER:
@@ -154,6 +156,7 @@ public class DataSourceServiceImpl implements DataSourceService {
             case JdbcConstants.ELASTIC_SEARCH_SQL:
                 return 0;
             case JdbcConstants.MYSQL:
+            case JdbcConstants.SQLITE:
                 return mysqlTotal(sourceDto, dto);
             default:
                 throw BusinessExceptionBuilder.build(ResponseCode.DATA_SOURCE_TYPE_DOES_NOT_MATCH_TEMPORARILY);
@@ -176,7 +179,15 @@ public class DataSourceServiceImpl implements DataSourceService {
         //sql 拼接 limit 分页信息
         int pageNumber = Integer.parseInt(dto.getContextData().getOrDefault("pageNumber", "1").toString());
         int pageSize = Integer.parseInt(dto.getContextData().getOrDefault("pageSize", "10").toString());
-        String sqlLimit = " limit " + (pageNumber - 1) * pageSize + "," + pageSize;
+        int offset = (pageNumber - 1) * pageSize;
+        String sqlLimit;
+        if (JdbcConstants.SQLITE.equalsIgnoreCase(sourceDto.getSourceType())) {
+            // SQLite: LIMIT count OFFSET offset
+            sqlLimit = " limit " + pageSize + " offset " + offset;
+        } else {
+            // MySQL and others: LIMIT offset,count
+            sqlLimit = " limit " + offset + "," + pageSize;
+        }
         sourceDto.setDynSentence(dynSentence.concat(sqlLimit));
         log.info("当前total：{}, 添加分页参数,sql语句：{}", JSONObject.toJSONString(result), sourceDto.getDynSentence());
         return result.get(0).getLongValue("count");
